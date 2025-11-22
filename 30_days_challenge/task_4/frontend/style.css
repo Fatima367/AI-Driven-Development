@@ -232,6 +232,91 @@ button:disabled {
     margin-bottom: 25px;
     font-size: 1.6em;
 }
+/* Quiz Specific Styles */
+.quiz-question {
+    background-color: var(--card-background);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.quiz-question p {
+    font-size: 1.1em;
+    margin-bottom: 15px;
+    color: var(--text-color);
+}
+
+.mcq-options,
+.true-false-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.quiz-option {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    background-color: #f0f8ff; /* Light blue background for options */
+    border: 1px solid #cceeff;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.quiz-option:hover {
+    background-color: #e6f7ff;
+    border-color: #99ddff;
+}
+
+.quiz-option input[type="radio"] {
+    margin-right: 10px;
+    accent-color: var(--primary-color); /* Highlight radio button with primary color */
+}
+
+.fill-in-the-blank-input {
+    width: calc(100% - 30px); /* Adjust for padding */
+    padding: 10px 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    font-size: 1em;
+    margin-top: 10px;
+    transition: border-color 0.2s ease;
+}
+
+.fill-in-the-blank-input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+/* Ensure output-content still holds general styling, but quiz-specific overrides */
+#quizOutput h3 {
+    text-align: center;
+    color: var(--primary-color);
+    margin-bottom: 25px;
+    font-size: 1.6em;
+}
+
+/* Feedback Styles */
+.correct-answer-highlight {
+    background-color: #e6ffe6; /* Light green for correct */
+    border-color: #4CAF50;
+}
+
+.incorrect-answer-highlight {
+    background-color: #ffe6e6; /* Light red for incorrect */
+    border-color: #F44336;
+}
+
+.correct-feedback {
+    color: #4CAF50;
+    font-weight: bold;
+    margin-top: 5px;
+    font-size: 0.9em;
+}
+
 /* Responsive Adjustments */
 @media (max-width: 768px) {
     .main-container {

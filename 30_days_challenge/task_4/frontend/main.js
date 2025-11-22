@@ -7,10 +7,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const generateQuizButton = document.getElementById('generateQuizButton');
     const quizSection = document.getElementById('quiz-section');
     const quizOutput = document.getElementById('quizOutput');
+    const submitQuizButton = document.getElementById('submitQuizButton'); // New
+    const quizScore = document.getElementById('quizScore');             // New
     const loadingOverlay = document.getElementById('loadingOverlay');
     const loadingMessage = document.getElementById('loadingMessage');
 
     let uploadedPdfText = ''; // To store the extracted text from PDF
+    let currentQuizData = null; // To store the generated quiz data
 
     // Helper functions for UI state
     const showLoading = (message) => {
@@ -33,12 +36,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Function to render the quiz dynamically
     const renderQuiz = (quizData) => {
         quizOutput.innerHTML = ''; // Clear previous quiz content
+        currentQuizData = quizData; // Store quiz data
 
         if (!quizData || !quizData.questions || quizData.questions.length === 0) {
             quizOutput.innerHTML = '<p>No quiz questions generated.</p>';
             return;
         }
 
+        // // Removed dynamic title as per user's request to keep static "Interactive Quiz"
         // const quizTitle = document.createElement('h3');
         // quizTitle.textContent = quizData.title;
         // quizOutput.appendChild(quizTitle);
@@ -46,7 +51,10 @@ document.addEventListener('DOMContentLoaded', () => {
         quizData.questions.forEach((q, index) => {
             const questionElement = document.createElement('div');
             questionElement.classList.add('quiz-question');
-            questionElement.innerHTML = `<p><strong>${index + 1}. ${q.question || q.question_with_blank}</strong></p>`;
+            questionElement.dataset.questionIndex = index; // Store index for easy lookup
+
+            const questionText = q.question || q.question_with_blank;
+            questionElement.innerHTML = `<p><strong>${index + 1}. ${questionText}</strong></p>`;
 
             if (q.type === 'mcq' && q.options) {
                 const optionsList = document.createElement('div');
@@ -55,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const optionLabel = document.createElement('label');
                     optionLabel.classList.add('quiz-option');
                     optionLabel.innerHTML = `
-                        <input type="radio" name="question-${index}" value="${option.id}" disabled>
+                        <input type="radio" name="question-${index}" value="${option.id}">
                         <span>${option.text}</span>
                     `;
                     optionsList.appendChild(optionLabel);
@@ -66,12 +74,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 optionsList.classList.add('true-false-options');
                 const trueLabel = document.createElement('label');
                 trueLabel.classList.add('quiz-option');
-                trueLabel.innerHTML = `<input type="radio" name="question-${index}" value="true" disabled> <span>True</span>`;
+                trueLabel.innerHTML = `<input type="radio" name="question-${index}" value="true"> <span>True</span>`;
                 optionsList.appendChild(trueLabel);
 
                 const falseLabel = document.createElement('label');
                 falseLabel.classList.add('quiz-option');
-                falseLabel.innerHTML = `<input type="radio" name="question-${index}" value="false" disabled> <span>False</span>`;
+                falseLabel.innerHTML = `<input type="radio" name="question-${index}" value="false"> <span>False</span>`;
                 optionsList.appendChild(falseLabel);
                 questionElement.appendChild(optionsList);
             } else if (q.type === 'fill_in_the_blank') {
@@ -79,11 +87,70 @@ document.addEventListener('DOMContentLoaded', () => {
                 inputField.type = 'text';
                 inputField.classList.add('fill-in-the-blank-input');
                 inputField.placeholder = 'Your answer';
-                inputField.disabled = true; // Disable for now, enable for user input later
                 questionElement.appendChild(inputField);
             }
             quizOutput.appendChild(questionElement);
         });
+        showElement(submitQuizButton); // Show submit button after quiz renders
+        hideElement(quizScore); // Hide score until submitted
+    };
+
+    // Function to check answers and display results
+    const checkAnswers = () => {
+        if (!currentQuizData) return;
+
+        let score = 0;
+        const totalQuestions = currentQuizData.questions.length;
+
+        currentQuizData.questions.forEach((q, index) => {
+            const questionElement = quizOutput.querySelector(`div[data-question-index="${index}"]`);
+            let isCorrect = false;
+            let userAnswer = '';
+            
+            // Disable all inputs after submission
+            questionElement.querySelectorAll('input').forEach(input => input.disabled = true);
+
+            if (q.type === 'mcq') {
+                const selectedOption = questionElement.querySelector(`input[name="question-${index}"]:checked`);
+                if (selectedOption) {
+                    userAnswer = selectedOption.value;
+                    isCorrect = (userAnswer === q.correct_answer_id);
+                }
+            } else if (q.type === 'true_false') {
+                const selectedOption = questionElement.querySelector(`input[name="question-${index}"]:checked`);
+                if (selectedOption) {
+                    userAnswer = selectedOption.value === 'true'; // Convert string to boolean
+                    isCorrect = (userAnswer === q.correct_answer);
+                }
+            } else if (q.type === 'fill_in_the_blank') {
+                const inputField = questionElement.querySelector('.fill-in-the-blank-input');
+                userAnswer = inputField.value.trim();
+                isCorrect = (userAnswer.toLowerCase() === q.correct_answer.toLowerCase());
+            }
+
+            if (isCorrect) {
+                score++;
+                questionElement.classList.add('correct-answer-highlight');
+            } else {
+                questionElement.classList.add('incorrect-answer-highlight');
+                // Display correct answer
+                const correctAnswerDisplay = document.createElement('p');
+                correctAnswerDisplay.classList.add('correct-feedback');
+                if (q.type === 'mcq') {
+                    const correctOption = q.options.find(opt => opt.id === q.correct_answer_id);
+                    correctAnswerDisplay.textContent = `Correct Answer: ${correctOption ? correctOption.text : 'N/A'}`;
+                } else if (q.type === 'true_false') {
+                    correctAnswerDisplay.textContent = `Correct Answer: ${q.correct_answer ? 'True' : 'False'}`;
+                } else if (q.type === 'fill_in_the_blank') {
+                    correctAnswerDisplay.textContent = `Correct Answer: ${q.correct_answer}`;
+                }
+                questionElement.appendChild(correctAnswerDisplay);
+            }
+        });
+
+        showElement(quizScore);
+        quizScore.innerHTML = `You scored ${score} out of ${totalQuestions}!`;
+        submitQuizButton.disabled = true; // Prevent re-submission
     };
 
 
@@ -91,6 +158,8 @@ document.addEventListener('DOMContentLoaded', () => {
     hideElement(summarySection);
     hideElement(quizSection);
     hideElement(generateQuizButton);
+    hideElement(submitQuizButton); // Hide submit button initially
+    hideElement(quizScore);        // Hide score initially
 
     uploadButton.addEventListener('click', async () => {
         const file = pdfUpload.files[0];
@@ -106,6 +175,8 @@ document.addEventListener('DOMContentLoaded', () => {
         hideElement(summarySection);
         hideElement(quizSection);
         hideElement(generateQuizButton);
+        hideElement(submitQuizButton); // Ensure hidden
+        hideElement(quizScore);        // Ensure hidden
         showLoading('Uploading and summarizing your PDF...');
 
         try {
@@ -132,6 +203,8 @@ document.addEventListener('DOMContentLoaded', () => {
             uploadStatus.textContent = `Error processing PDF: ${error.message}. Please try again.`;
             hideElement(summarySection);
             hideElement(generateQuizButton);
+            hideElement(submitQuizButton);
+            hideElement(quizScore);
         } finally {
             hideLoading();
         }
@@ -144,6 +217,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         hideElement(quizSection);
+        hideElement(submitQuizButton); // Ensure submit button is hidden during generation
+        hideElement(quizScore);        // Ensure score is hidden during generation
         showLoading('Generating quiz questions...');
 
         try {
@@ -168,9 +243,12 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error generating quiz:', error);
             quizOutput.textContent = `Error generating quiz: ${error.message}. Please try again.`;
             hideElement(quizSection); // Hide quiz section on error
+            hideElement(submitQuizButton);
+            hideElement(quizScore);
         } finally {
             hideLoading();
         }
     });
-});
 
+    submitQuizButton.addEventListener('click', checkAnswers); // Event listener for submit button
+});

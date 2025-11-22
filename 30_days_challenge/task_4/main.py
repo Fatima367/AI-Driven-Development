@@ -12,6 +12,10 @@ from agents import Runner # Import Runner
 from pydantic import BaseModel, Field, ValidationError # Import ValidationError
 from typing import List, Literal, Union
 
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# Removed: logger = logging.getLogger(__name__)
+
 # --- Pydantic Models for Quiz Structure ---
 class MCQOption(BaseModel):
     id: str = Field(..., description="Unique identifier for the option (e.g., 'a', 'b', 'c', 'd')")
@@ -81,6 +85,7 @@ async def upload_pdf(pdf_file: UploadFile = File(...)):
         return {"full_text": full_text, "summary": summary}
 
     except Exception as e:
+        logging.error(f"Error processing PDF: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error processing PDF: {e}")
 
 @app.post("/generate_summary")
@@ -98,6 +103,7 @@ async def generate_summary(text: dict):
         summary = result.final_output
         return {"summary": summary}
     except Exception as e:
+        logging.error(f"Error generating summary: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error generating summary: {e}")
 
 @app.post("/generate_quiz")
@@ -135,13 +141,14 @@ async def generate_quiz(request_body: dict):
         Here is the text to generate the quiz from:
         {full_text}
         """
-        logger.info(f"Quiz prompt length: {len(quiz_prompt)} characters.")
+        logging.info(f"Quiz prompt length: {len(quiz_prompt)} characters.")
 
         result = await Runner.run(study_agent, quiz_prompt)
         # Clean the agent's output by stripping markdown code block delimiters
         cleaned_output = result.final_output.strip()
         if cleaned_output.startswith("```json"):
-            cleaned_output = cleaned_output[len("```json"):].strip()
+            cleaned_output = cleaned_output[len("```json"):
+].strip()
         if cleaned_output.endswith("```"):
             cleaned_output = cleaned_output[:-len("```")].strip()
 
@@ -154,10 +161,13 @@ async def generate_quiz(request_body: dict):
         return {"quiz": validated_quiz.model_dump()}
 
     except json.JSONDecodeError as e:
+        logging.error(f"JSONDecodeError when parsing agent output for quiz: {e}. Raw output: {result.final_output}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Agent returned invalid JSON for quiz: {e}. Raw output: {result.final_output}")
     except ValidationError as e: # Catch Pydantic validation errors
+        logging.error(f"ValidationError when validating agent output for quiz: {e}. Raw output: {result.final_output}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Agent returned quiz data that does not match schema: {e}. Raw output: {result.final_output}")
     except Exception as e:
+        logging.error(f"Error generating quiz: {e}", exc_info=True) # Log traceback
         raise HTTPException(status_code=500, detail=f"Error generating quiz: {e}")
 
 
