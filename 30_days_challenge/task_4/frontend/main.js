@@ -30,6 +30,63 @@ document.addEventListener('DOMContentLoaded', () => {
         element.classList.add('hidden');
     };
 
+    // Function to render the quiz dynamically
+    const renderQuiz = (quizData) => {
+        quizOutput.innerHTML = ''; // Clear previous quiz content
+
+        if (!quizData || !quizData.questions || quizData.questions.length === 0) {
+            quizOutput.innerHTML = '<p>No quiz questions generated.</p>';
+            return;
+        }
+
+        // const quizTitle = document.createElement('h3');
+        // quizTitle.textContent = quizData.title;
+        // quizOutput.appendChild(quizTitle);
+
+        quizData.questions.forEach((q, index) => {
+            const questionElement = document.createElement('div');
+            questionElement.classList.add('quiz-question');
+            questionElement.innerHTML = `<p><strong>${index + 1}. ${q.question || q.question_with_blank}</strong></p>`;
+
+            if (q.type === 'mcq' && q.options) {
+                const optionsList = document.createElement('div');
+                optionsList.classList.add('mcq-options');
+                q.options.forEach(option => {
+                    const optionLabel = document.createElement('label');
+                    optionLabel.classList.add('quiz-option');
+                    optionLabel.innerHTML = `
+                        <input type="radio" name="question-${index}" value="${option.id}" disabled>
+                        <span>${option.text}</span>
+                    `;
+                    optionsList.appendChild(optionLabel);
+                });
+                questionElement.appendChild(optionsList);
+            } else if (q.type === 'true_false') {
+                const optionsList = document.createElement('div');
+                optionsList.classList.add('true-false-options');
+                const trueLabel = document.createElement('label');
+                trueLabel.classList.add('quiz-option');
+                trueLabel.innerHTML = `<input type="radio" name="question-${index}" value="true" disabled> <span>True</span>`;
+                optionsList.appendChild(trueLabel);
+
+                const falseLabel = document.createElement('label');
+                falseLabel.classList.add('quiz-option');
+                falseLabel.innerHTML = `<input type="radio" name="question-${index}" value="false" disabled> <span>False</span>`;
+                optionsList.appendChild(falseLabel);
+                questionElement.appendChild(optionsList);
+            } else if (q.type === 'fill_in_the_blank') {
+                const inputField = document.createElement('input');
+                inputField.type = 'text';
+                inputField.classList.add('fill-in-the-blank-input');
+                inputField.placeholder = 'Your answer';
+                inputField.disabled = true; // Disable for now, enable for user input later
+                questionElement.appendChild(inputField);
+            }
+            quizOutput.appendChild(questionElement);
+        });
+    };
+
+
     // Initial state
     hideElement(summarySection);
     hideElement(quizSection);
@@ -104,8 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const data = await response.json();
-            // Format quiz JSON for better readability
-            quizOutput.textContent = JSON.stringify(data.quiz, null, 2); 
+            renderQuiz(data.quiz); // Render the quiz
             showElement(quizSection);
 
         } catch (error) {
@@ -117,3 +173,4 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+

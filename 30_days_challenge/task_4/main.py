@@ -1,6 +1,7 @@
 import os
 import uvicorn
 import json
+import logging # Import logging
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -8,7 +9,7 @@ from pypdf import PdfReader
 from io import BytesIO
 from agent import study_agent # Import the study agent
 from agents import Runner # Import Runner
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError # Import ValidationError
 from typing import List, Literal, Union
 
 # --- Pydantic Models for Quiz Structure ---
@@ -110,20 +111,42 @@ async def generate_quiz(request_body: dict):
 
     try:
         quiz_prompt = f"""
-        Generate a quiz with at least 10 questions based on the following text.
-        The quiz should include a mix of Multiple-Choice Questions (MCQ), True/False, and Fill-in-the-Blank questions.
-        For MCQs, provide 4 options and clearly indicate the correct answer.
-        The output must be a JSON object adhering to the following Pydantic schema:
+        Your task is to generate a comprehensive quiz based on the provided text.
+        The quiz must contain at least 10 questions and should include a mix of Multiple-Choice Questions (MCQ), True/False, and Fill-in-the-Blank questions.
 
+        For MCQs:
+        - Provide 4 distinct options.
+        - Clearly specify the 'correct_answer_id' corresponding to one of the options.
+
+        For True/False questions:
+        - Provide a clear statement and indicate if it's true or false.
+
+        For Fill-in-the-Blank questions:
+        - Use '______' to indicate the blank.
+        - Provide the 'correct_answer' to fill the blank.
+
+        IMPORTANT: Your entire response MUST be a single JSON object, and ONLY the JSON object. Do NOT include any preamble text, explanations, markdown outside the JSON block, or any other extraneous characters.
+        The JSON object MUST strictly adhere to the following Pydantic schema. Pay close attention to types, field names, and nested structures:
+
+        ```json
         {json.dumps(Quiz.model_json_schema(), indent=2)}
+        ```
 
-        Here is the text:
+        Here is the text to generate the quiz from:
         {full_text}
         """
+        logger.info(f"Quiz prompt length: {len(quiz_prompt)} characters.")
+
         result = await Runner.run(study_agent, quiz_prompt)
-        
+        # Clean the agent's output by stripping markdown code block delimiters
+        cleaned_output = result.final_output.strip()
+        if cleaned_output.startswith("```json"):
+            cleaned_output = cleaned_output[len("```json"):].strip()
+        if cleaned_output.endswith("```"):
+            cleaned_output = cleaned_output[:-len("```")].strip()
+
         # Attempt to parse the JSON output from the agent
-        quiz_data = json.loads(result.final_output)
+        quiz_data = json.loads(cleaned_output)
         
         # Validate the quiz data against the Pydantic model
         validated_quiz = Quiz.model_validate(quiz_data)
@@ -132,6 +155,8 @@ async def generate_quiz(request_body: dict):
 
     except json.JSONDecodeError as e:
         raise HTTPException(status_code=500, detail=f"Agent returned invalid JSON for quiz: {e}. Raw output: {result.final_output}")
+    except ValidationError as e: # Catch Pydantic validation errors
+        raise HTTPException(status_code=500, detail=f"Agent returned quiz data that does not match schema: {e}. Raw output: {result.final_output}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating quiz: {e}")
 

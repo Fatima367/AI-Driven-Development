@@ -22,7 +22,7 @@ gemini_model = OpenAIChatCompletionsModel(
 # Define the Study Agent
 study_agent = Agent(
     name="Study Agent",
-    instructions="You are an educational agent that assists students by transforming lengthy PDF study notes into concise summaries and interactive quizzes (MCQ and mixed-style).",
+    instructions="You are an educational agent that assists students by transforming lengthy PDF study notes into brief and concise summaries and interactive quizzes (MCQ and mixed-style).",
     model=gemini_model,
     tools=[read_user_profile, update_user_profile] # Bind the tools
 )
