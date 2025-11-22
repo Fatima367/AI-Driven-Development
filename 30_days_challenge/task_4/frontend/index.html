@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Agent</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="main-container">
+        <header>
+            <h1>Study Agent: Notes Summarizer & Quiz Generator</h1>
+        </header>
+
+        <section id="upload-section" class="card">
+            <h2>Upload Your PDF Study Notes</h2>
+            <div class="input-group">
+                <input type="file" id="pdfUpload" accept=".pdf">
+                <button id="uploadButton">Upload & Summarize</button>
+            </div>
+            <div id="uploadStatus" class="status-message"></div>
+        </section>
+
+        <section id="summary-section" class="card hidden">
+            <h2>Generated Summary</h2>
+            <div id="summaryOutput" class="output-content"></div>
+            <button id="generateQuizButton" class="hidden">Generate Quiz</button>
+        </section>
+
+        <section id="quiz-section" class="card hidden">
+            <h2>Interactive Quiz</h2>
+            <div id="quizOutput" class="output-content"></div>
+        </section>
+
+        <div id="loadingOverlay" class="loading-overlay hidden">
+            <div class="spinner"></div>
+            <p id="loadingMessage">Processing...</p>
+        </div>
+    </div>
+    <script src="/static/main.js"></script>
+</body>
+</html>
