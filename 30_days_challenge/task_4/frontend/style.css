@@ -125,6 +125,11 @@ button:disabled {
     display: block;
 }
 
+#submitQuizButton {
+    margin: 25px auto 0 auto; /* Added margin-top for submit button */
+    display: block;
+}
+
 /* Hidden Utility Class */
 .hidden {
     display: none !important;
@@ -311,10 +316,21 @@ button:disabled {
 }
 
 .correct-feedback {
-    color: #4CAF50;
+    color: #28a745; /* Stronger green */
     font-weight: bold;
     margin-top: 5px;
-    font-size: 0.9em;
+    font-size: 1em; /* Slightly larger */
+}
+
+#quizScore {
+    font-size: 1.5em; /* Larger font for score */
+    font-weight: bold;
+    color: var(--primary-color); /* Use primary color for score */
+    margin-top: 20px;
+    padding: 10px;
+    border: 2px solid var(--primary-color);
+    border-radius: 8px;
+    background-color: #e0f7fa; /* Light background for score */
 }
 
 /* Responsive Adjustments */
