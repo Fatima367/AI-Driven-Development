@@ -133,16 +133,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 questionElement.classList.add('correct-answer-highlight');
             } else {
                 questionElement.classList.add('incorrect-answer-highlight');
-                // Display correct answer
+                // Display correct answer and highlight the correct option
                 const correctAnswerDisplay = document.createElement('p');
-                correctAnswerDisplay.classList.add('correct-feedback');
+                correctAnswerDisplay.classList.add('correct-feedback'); // Apply class for styling
+                
                 if (q.type === 'mcq') {
                     const correctOption = q.options.find(opt => opt.id === q.correct_answer_id);
-                    correctAnswerDisplay.textContent = `Correct Answer: ${correctOption ? correctOption.text : 'N/A'}`;
+                    if (correctOption) {
+                        correctAnswerDisplay.innerHTML = `Correct Answer: <strong>${correctOption.text}</strong>`;
+                        // Highlight the correct option visually
+                        const correctOptionLabel = questionElement.querySelector(`input[name="question-${index}"][value="${correctOption.id}"]`).closest('.quiz-option');
+                        if (correctOptionLabel) {
+                            correctOptionLabel.classList.add('correct-option-highlight');
+                        }
+                    } else {
+                        correctAnswerDisplay.textContent = `Correct Answer: N/A`;
+                    }
                 } else if (q.type === 'true_false') {
-                    correctAnswerDisplay.textContent = `Correct Answer: ${q.correct_answer ? 'True' : 'False'}`;
+                    correctAnswerDisplay.innerHTML = `Correct Answer: <strong>${q.correct_answer ? 'True' : 'False'}</strong>`;
+                    // Highlight the correct option visually
+                    const correctValue = q.correct_answer ? 'true' : 'false';
+                    const correctOptionLabel = questionElement.querySelector(`input[name="question-${index}"][value="${correctValue}"]`).closest('.quiz-option');
+                    if (correctOptionLabel) {
+                        correctOptionLabel.classList.add('correct-option-highlight');
+                    }
                 } else if (q.type === 'fill_in_the_blank') {
-                    correctAnswerDisplay.textContent = `Correct Answer: ${q.correct_answer}`;
+                    correctAnswerDisplay.innerHTML = `Correct Answer: <strong>${q.correct_answer}</strong>`;
                 }
                 questionElement.appendChild(correctAnswerDisplay);
             }

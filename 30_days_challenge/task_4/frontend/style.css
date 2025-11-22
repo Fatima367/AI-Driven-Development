@@ -322,6 +322,13 @@ button:disabled {
     font-size: 1em; /* Slightly larger */
 }
 
+.correct-option-highlight {
+    background-color: #d4edda; /* Lighter green background for correct option */
+    border-color: #28a745; /* Green border */
+    font-weight: bold;
+    color: #155724; /* Darker green text */
+}
+
 #quizScore {
     font-size: 1.5em; /* Larger font for score */
     font-weight: bold;
