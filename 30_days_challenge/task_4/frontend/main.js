@@ -38,15 +38,10 @@ document.addEventListener('DOMContentLoaded', () => {
         quizOutput.innerHTML = ''; // Clear previous quiz content
         currentQuizData = quizData; // Store quiz data
 
-        if (!quizData || !quizData.questions || quizData.questions.length === 0) {
+        if (!quizData?.questions?.length) {
             quizOutput.innerHTML = '<p>No quiz questions generated.</p>';
             return;
         }
-
-        // // Removed dynamic title as per user's request to keep static "Interactive Quiz"
-        // const quizTitle = document.createElement('h3');
-        // quizTitle.textContent = quizData.title;
-        // quizOutput.appendChild(quizTitle);
 
         quizData.questions.forEach((q, index) => {
             const questionElement = document.createElement('div');
@@ -95,6 +90,72 @@ document.addEventListener('DOMContentLoaded', () => {
         hideElement(quizScore); // Hide score until submitted
     };
 
+    // Helper to disable all inputs for a given question
+    const disableQuestionInputs = (questionElement) => {
+        questionElement.querySelectorAll('input').forEach(input => input.disabled = true);
+    };
+
+    // Helper to check MCQ answers
+    const getMCQAnswerAndCheck = (questionElement, q, index) => {
+        const selectedOption = questionElement.querySelector(`input[name="question-${index}"]:checked`);
+        let userAnswer = '';
+        let isCorrect = false;
+        if (selectedOption) {
+            userAnswer = selectedOption.value;
+            isCorrect = (userAnswer === q.correct_answer_id);
+        }
+        return { isCorrect, userAnswer };
+    };
+
+    // Helper to check True/False answers
+    const getTrueFalseAnswerAndCheck = (questionElement, q, index) => {
+        const selectedOption = questionElement.querySelector(`input[name="question-${index}"]:checked`);
+        let userAnswer = '';
+        let isCorrect = false;
+        if (selectedOption) {
+            userAnswer = selectedOption.value === 'true'; // Convert string to boolean
+            isCorrect = (userAnswer === q.correct_answer);
+        }
+        return { isCorrect, userAnswer };
+    };
+
+    // Helper to check Fill-in-the-Blank answers
+    const getFillInTheBlankAnswerAndCheck = (questionElement, q) => {
+        const inputField = questionElement.querySelector('.fill-in-the-blank-input');
+        let userAnswer = inputField.value.trim();
+        let isCorrect = (userAnswer.toLowerCase() === q.correct_answer.toLowerCase());
+        return { isCorrect, userAnswer };
+    };
+
+    // Helper to display correct answer feedback and highlight
+    const displayCorrectFeedback = (questionElement, q, index) => {
+        const correctAnswerDisplay = document.createElement('p');
+        correctAnswerDisplay.classList.add('correct-feedback');
+
+        if (q.type === 'mcq') {
+            const correctOption = q.options.find(opt => opt.id === q.correct_answer_id);
+            if (correctOption) {
+                correctAnswerDisplay.innerHTML = `Correct Answer: <strong>${correctOption.text}</strong>`;
+                const correctOptionLabel = questionElement.querySelector(`input[name="question-${index}"][value="${correctOption.id}"]`).closest('.quiz-option');
+                if (correctOptionLabel) {
+                    correctOptionLabel.classList.add('correct-option-highlight');
+                }
+            } else {
+                correctAnswerDisplay.textContent = `Correct Answer: N/A`;
+            }
+        } else if (q.type === 'true_false') {
+            correctAnswerDisplay.innerHTML = `Correct Answer: <strong>${q.correct_answer ? 'True' : 'False'}</strong>`;
+            const correctValue = q.correct_answer ? 'true' : 'false';
+            const correctOptionLabel = questionElement.querySelector(`input[name="question-${index}"][value="${correctValue}"]`).closest('.quiz-option');
+            if (correctOptionLabel) {
+                correctOptionLabel.classList.add('correct-option-highlight');
+            }
+        } else if (q.type === 'fill_in_the_blank') {
+            correctAnswerDisplay.innerHTML = `Correct Answer: <strong>${q.correct_answer}</strong>`;
+        }
+        questionElement.appendChild(correctAnswerDisplay);
+    };
+
     // Function to check answers and display results
     const checkAnswers = () => {
         if (!currentQuizData) return;
@@ -107,8 +168,18 @@ document.addEventListener('DOMContentLoaded', () => {
             let isCorrect = false;
             let userAnswer = '';
             
-            // Disable all inputs after submission
-            questionElement.querySelectorAll('input').forEach(input => input.disabled = true);
+            disableQuestionInputs(questionElement);
+
+            let result = { isCorrect: false, userAnswer: '' };
+            if (q.type === 'mcq') {
+                result = getMCQAnswerAndCheck(questionElement, q, index);
+            } else if (q.type === 'true_false') {
+                result = getTrueFalseAnswerAndCheck(questionElement, q, index);
+            } else if (q.type === 'fill_in_the_blank') {
+                result = getFillInTheBlankAnswerAndCheck(questionElement, q);
+            }
+            isCorrect = result.isCorrect;
+            userAnswer = result.userAnswer;
 
             if (q.type === 'mcq') {
                 const selectedOption = questionElement.querySelector(`input[name="question-${index}"]:checked`);

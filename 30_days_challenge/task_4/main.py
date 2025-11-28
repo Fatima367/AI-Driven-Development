@@ -2,6 +2,7 @@ import os
 import uvicorn
 import json
 import logging # Import logging
+import anyio
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -55,8 +56,8 @@ async def read_root():
     """
     Serves the main HTML page of the application.
     """
-    with open("frontend/index.html", "r") as f:
-        return HTMLResponse(content=f.read())
+    content = await anyio.Path("frontend/index.html").read_text()
+    return HTMLResponse(content=content)
 
 @app.post("/upload_pdf")
 async def upload_pdf(pdf_file: UploadFile = File(...)):
