@@ -56,3 +56,8 @@ The agent provides two primary functionalities:
 ├── user_profile.json     # JSON Storage (Auto-created if missing)
 └── pyproject.toml        # UV Config
 ```
+
+### Run command in local environment
+```bash
+uvicorn main:app --reload
+```
