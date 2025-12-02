@@ -1,0 +1,23 @@
+# pyproject.toml
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "calculator"
+version = "0.1.0"
+authors = [
+  { name="Your Name", email="your.email@example.com" },
+]
+description = "A simple command-line calculator for basic arithmetic operations."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "pytest", # For testing, though typically not a runtime dependency for users
+]
+
+[project.scripts]
+calculator = "cli.app:main"
+
+[tool.setuptools.packages.find]
+where = ["src"] # Search for packages in "src"
